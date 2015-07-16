@@ -25,6 +25,9 @@ except ImportError:
     from djangoappengine.storage import BlobstoreFile, BlobstoreStorage
 
 
+encode = lambda x: x.encode('utf-8') if isinstance(x, unicode) else x
+
+
 def transactional(func):
     if "djangoappengine" in unicode(connections['default']) or \
         "djangae" in unicode(connections['default']):
@@ -424,7 +427,7 @@ class ImportShard(models.Model):
         if not get_model(*self.task.model_path.split(".")).get_meta().generate_error_csv:
             return
 
-        row_values = [str(v) for v in data.values()]
+        row_values = [str(encode(v)) for v in data.values()]
         ImportShardError.objects.create(
             shard=self,
             line=json.dumps(row_values + [". ".join(errors)])
@@ -453,7 +456,6 @@ class ImportShard(models.Model):
         self.error_csv_filename = self._error_csv_filename()
 
         # Make sure strings are encoded for writing.
-        encode = lambda x: x.encode('utf-8') if isinstance(x, unicode) else x
 
         @transactional
         def _write(_this):
